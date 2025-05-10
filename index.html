@@ -1,146 +1,270 @@
-import React, { useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import axios from "axios";
-import { format, parseISO } from "date-fns";
-
-export default function Dashboard() {
-  const [authenticated, setAuthenticated] = useState(false);
-  const [passwordInput, setPasswordInput] = useState("");
-
-  const [time, setTime] = useState("");
-  const [date, setDate] = useState("");
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [eventText, setEventText] = useState("");
-  const [events, setEvents] = useState({});
-  const [dailyProblem, setDailyProblem] = useState(null);
-
-  useEffect(() => {
-    const updateClock = () => {
-      const now = new Date();
-      const timeString = now.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: true,
-      });
-      const dateString = format(now, "PPPP");
-      setTime(timeString);
-      setDate(dateString);
-    };
-
-    updateClock();
-    const timer = setInterval(updateClock, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    async function fetchDailyProblem() {
-      try {
-        const res = await axios.get("https://programming-quotes-api.herokuapp.com/quotes/random");
-        setDailyProblem(res.data);
-      } catch (err) {
-        console.error("Error fetching problem:", err);
-      }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Secure Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background-color: #121212;
+      color: #ffffff;
     }
-    fetchDailyProblem();
-  }, []);
+    #passwordScreen {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: #121212;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    }
+    #passwordScreen input {
+      padding: 0.5rem;
+      font-size: 1rem;
+      border: 1px solid #444;
+      border-radius: 5px;
+      background: #1e1e1e;
+      color: white;
+    }
+    #passwordScreen button {
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      background-color: #333;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #passwordScreen button:hover {
+      background-color: #444;
+    }
 
-  const handleAddEvent = () => {
-    const dateKey = format(selectedDate, "yyyy-MM-dd");
-    setEvents(prev => ({ ...prev, [dateKey]: eventText }));
-    setEventText("");
-  };
+    .section {
+      width: 100%;
+      max-width: 900px;
+      margin: 2rem auto;
+      background: #1e1e1e;
+      padding: 1rem;
+      border-radius: 10px;
+    }
+    h2 {
+      text-align: center;
+    }
+    .clock {
+      font-size: 3rem;
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+    }
+    th, td {
+      padding: 0.5rem;
+      border: 1px solid #333;
+    }
+    td:hover {
+      background-color: #333;
+      cursor: pointer;
+    }
+    .event {
+      background: #292929;
+      padding: 0.5rem;
+      margin: 0.3rem 0;
+      border-radius: 5px;
+    }
+    .event input {
+      width: 80%;
+      background: #222;
+      color: white;
+      border: 1px solid #555;
+      border-radius: 4px;
+      padding: 0.3rem;
+    }
+    .event button {
+      background: #444;
+      color: white;
+      border: none;
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .event button:hover {
+      background: #666;
+    }
+    .news-item {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #333;
+    }
+    .coding-question {
+      font-style: italic;
+      text-align: center;
+      padding: 1rem;
+      background: #222;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
 
-  const PASSWORD = "8653";
+<!-- Password Gate -->
+<div id="passwordScreen">
+  <h2>Enter Password</h2>
+  <input type="password" id="passwordInput" placeholder="Enter code"/>
+  <button onclick="checkPassword()">Unlock</button>
+  <p id="errorMsg" style="color: red; margin-top: 1rem;"></p>
+</div>
 
-  const handleLogin = () => {
-    if (passwordInput === PASSWORD) {
-      setAuthenticated(true);
+<!-- Main Dashboard Content -->
+<div id="dashboardContent" style="display: none;">
+  <div class="section clock" id="clock">--:--:--</div>
+
+  <div class="section calendar">
+    <h2 id="monthYear">Calendar</h2>
+    <table id="calendarTable"></table>
+    <div class="event-list" id="eventList"></div>
+  </div>
+
+  <div class="section">
+    <h2>Today's Coding Question</h2>
+    <div class="coding-question" id="codingQuestion"></div>
+  </div>
+
+  <div class="section">
+    <h2>Latest News</h2>
+    <div id="newsContainer">Loading news...</div>
+  </div>
+</div>
+
+<script>
+  // Password Check
+  function checkPassword() {
+    const input = document.getElementById("passwordInput").value;
+    const correctPassword = "8653";
+    if (input === correctPassword) {
+      document.getElementById("passwordScreen").style.display = "none";
+      document.getElementById("dashboardContent").style.display = "block";
     } else {
-      alert("Incorrect password");
+      document.getElementById("errorMsg").textContent = "Incorrect password.";
     }
-  };
-
-  if (!authenticated) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-gray-900 text-white">
-        <Card className="w-80 text-center bg-gray-800">
-          <CardContent className="p-6">
-            <h2 className="text-xl font-bold mb-4">Enter Kiosk Password</h2>
-            <Input
-              type="password"
-              value={passwordInput}
-              onChange={e => setPasswordInput(e.target.value)}
-              placeholder="Enter password"
-              className="mb-4"
-            />
-            <Button onClick={handleLogin} className="w-full">
-              Login
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
   }
 
-  return (
-    <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-900 text-white min-h-screen">
-      <Card className="text-center bg-gray-800">
-        <CardContent>
-          <h1 className="text-3xl font-bold">Current Time</h1>
-          <p className="text-xl mt-2">{time}</p>
-          <p className="text-md text-gray-400">{date}</p>
-        </CardContent>
-      </Card>
+  // Live Clock
+  function updateClock() {
+    const now = new Date();
+    document.getElementById("clock").textContent = now.toLocaleTimeString();
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
 
-      <Card className="bg-gray-800">
-        <CardContent>
-          <h2 className="text-xl font-semibold mb-2">Monthly Calendar</h2>
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={setSelectedDate}
-            modifiers={{
-              eventDays: Object.keys(events).map(date => parseISO(date))
-            }}
-            modifiersClassNames={{
-              eventDays: "bg-blue-600 text-white rounded-full"
-            }}
-          />
-          <div className="mt-4">
-            <Input
-              value={eventText}
-              onChange={e => setEventText(e.target.value)}
-              placeholder="Add event name"
-              className="text-black"
-            />
-            <Button onClick={handleAddEvent} className="mt-2 w-full">
-              Add Event
-            </Button>
-          </div>
-          {events[format(selectedDate, "yyyy-MM-dd")] && (
-            <p className="mt-2 text-green-400">Event: {events[format(selectedDate, "yyyy-MM-dd")]}</p>
-          )}
-        </CardContent>
-      </Card>
+  // Calendar
+  const calendarTable = document.getElementById("calendarTable");
+  const monthYear = document.getElementById("monthYear");
+  const eventList = document.getElementById("eventList");
+  const events = JSON.parse(localStorage.getItem("calendarEvents") || "{}");
 
-      <Card className="md:col-span-2 bg-gray-800">
-        <CardContent>
-          <h2 className="text-xl font-semibold mb-2">Developer Quote of the Day</h2>
-          {dailyProblem ? (
-            <div>
-              <p className="italic">"{dailyProblem.en}"</p>
-              <p className="text-right text-sm mt-2">— {dailyProblem.author}</p>
-            </div>
-          ) : (
-            <p>Loading quote...</p>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+  const now = new Date();
+  let currentMonth = now.getMonth();
+  let currentYear = now.getFullYear();
+
+  function buildCalendar(month, year) {
+    calendarTable.innerHTML = "";
+    monthYear.textContent = `${new Date(year, month).toLocaleString('default', { month: 'long' })} ${year}`;
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const header = document.createElement("tr");
+    daysOfWeek.forEach(day => {
+      const th = document.createElement("th");
+      th.textContent = day;
+      header.appendChild(th);
+    });
+    calendarTable.appendChild(header);
+
+    let date = 1;
+    for (let i = 0; i < 6; i++) {
+      const row = document.createElement("tr");
+      for (let j = 0; j < 7; j++) {
+        const cell = document.createElement("td");
+        if (i === 0 && j < firstDay) {
+          cell.textContent = "";
+        } else if (date > daysInMonth) {
+          break;
+        } else {
+          cell.textContent = date;
+          cell.onclick = () => showEventInput(year, month, date);
+          date++;
+        }
+        row.appendChild(cell);
+      }
+      calendarTable.appendChild(row);
+    }
+  }
+
+  function showEventInput(year, month, day) {
+    const key = `${year}-${month + 1}-${day}`;
+    eventList.innerHTML = `
+      <div class="event">
+        <strong>${key}</strong><br/>
+        <input id="eventInput" type="text" placeholder="Event title" />
+        <button onclick="saveEvent('${key}')">Save</button>
+      </div>
+      ${events[key] ? `<div class="event"><em>Saved:</em> ${events[key]}</div>` : ""}
+    `;
+  }
+
+  function saveEvent(key) {
+    const input = document.getElementById("eventInput");
+    if (input.value.trim()) {
+      events[key] = input.value.trim();
+      localStorage.setItem("calendarEvents", JSON.stringify(events));
+      showEventInput(...key.split("-").map((v, i) => i === 1 ? +v - 1 : +v));
+    }
+  }
+
+  buildCalendar(currentMonth, currentYear);
+
+  // Coding Question
+  const questions = [
+    "How would you detect a cycle in a linked list?",
+    "What’s the difference between synchronous and asynchronous code?",
+    "How would you implement a debounce function in JavaScript?",
+    "Explain the concept of closures with an example.",
+    "How does garbage collection work in modern programming languages?",
+    "Design a URL shortener like Bit.ly. What would your architecture look like?"
+  ];
+  const dailyQuestion = questions[Math.floor(Math.random() * questions.length)];
+  document.getElementById("codingQuestion").textContent = dailyQuestion;
+
+  // News API
+  async function fetchNews() {
+    const apiKey = "e49c6ebb27c64e01b4b00f1a51f07c00"; // Your API key
+    const newsContainer = document.getElementById("newsContainer");
+
+    try {
+      const res = await fetch(`https://newsapi.org/v2/top-headlines?country=us&pageSize=5&apiKey=${apiKey}`);
+      const data = await res.json();
+      newsContainer.innerHTML = "";
+      data.articles.forEach(article => {
+        const div = document.createElement("div");
+        div.className = "news-item";
+        div.innerHTML = `<strong>${article.title}</strong><br><small>${article.source.name}</small>`;
+        newsContainer.appendChild(div);
+      });
+    } catch (err) {
+      newsContainer.textContent = "Failed to load news. Check API key or CORS settings.";
+    }
+  }
+
+  fetchNews();
+</script>
+</body>
+</html>
+
 
