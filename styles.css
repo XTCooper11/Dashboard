@@ -1,0 +1,45 @@
+body {
+  background-color: #121212;
+  color: #ffffff;
+  font-family: Arial, sans-serif;
+  padding: 2rem;
+}
+
+h1, h2 {
+  color: #fff;
+}
+
+input, button {
+  padding: 0.5rem;
+  margin: 0.5rem 0;
+  border: none;
+  border-radius: 5px;
+}
+
+input {
+  background-color: #222;
+  color: #fff;
+}
+
+button {
+  background-color: #333;
+  color: #fff;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #444;
+}
+
+.section {
+  margin-top: 2rem;
+}
+
+.hidden {
+  display: none;
+}
+
+#login-screen {
+  text-align: center;
+  margin-top: 10vh;
+}
