@@ -1,270 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Secure Dashboard</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      background-color: #121212;
-      color: #ffffff;
-    }
-    #passwordScreen {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background-color: #121212;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 10;
-    }
-    #passwordScreen input {
-      padding: 0.5rem;
-      font-size: 1rem;
-      border: 1px solid #444;
-      border-radius: 5px;
-      background: #1e1e1e;
-      color: white;
-    }
-    #passwordScreen button {
-      margin-top: 1rem;
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-      background-color: #333;
-      border: none;
-      color: white;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    #passwordScreen button:hover {
-      background-color: #444;
-    }
-
-    .section {
-      width: 100%;
-      max-width: 900px;
-      margin: 2rem auto;
-      background: #1e1e1e;
-      padding: 1rem;
-      border-radius: 10px;
-    }
-    h2 {
-      text-align: center;
-    }
-    .clock {
-      font-size: 3rem;
-      text-align: center;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: center;
-    }
-    th, td {
-      padding: 0.5rem;
-      border: 1px solid #333;
-    }
-    td:hover {
-      background-color: #333;
-      cursor: pointer;
-    }
-    .event {
-      background: #292929;
-      padding: 0.5rem;
-      margin: 0.3rem 0;
-      border-radius: 5px;
-    }
-    .event input {
-      width: 80%;
-      background: #222;
-      color: white;
-      border: 1px solid #555;
-      border-radius: 4px;
-      padding: 0.3rem;
-    }
-    .event button {
-      background: #444;
-      color: white;
-      border: none;
-      padding: 0.3rem 0.6rem;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .event button:hover {
-      background: #666;
-    }
-    .news-item {
-      padding: 0.5rem 0;
-      border-bottom: 1px solid #333;
-    }
-    .coding-question {
-      font-style: italic;
-      text-align: center;
-      padding: 1rem;
-      background: #222;
-      border-radius: 10px;
-    }
-  </style>
+  <title>Kiosk Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-
-<!-- Password Gate -->
-<div id="passwordScreen">
-  <h2>Enter Password</h2>
-  <input type="password" id="passwordInput" placeholder="Enter code"/>
-  <button onclick="checkPassword()">Unlock</button>
-  <p id="errorMsg" style="color: red; margin-top: 1rem;"></p>
-</div>
-
-<!-- Main Dashboard Content -->
-<div id="dashboardContent" style="display: none;">
-  <div class="section clock" id="clock">--:--:--</div>
-
-  <div class="section calendar">
-    <h2 id="monthYear">Calendar</h2>
-    <table id="calendarTable"></table>
-    <div class="event-list" id="eventList"></div>
+  <div id="login-screen">
+    <h2>Enter Kiosk Password</h2>
+    <input type="password" id="password-input" placeholder="Enter password" />
+    <button id="login-btn">Login</button>
   </div>
 
-  <div class="section">
-    <h2>Today's Coding Question</h2>
-    <div class="coding-question" id="codingQuestion"></div>
+  <div id="dashboard" class="hidden">
+    <h1>Dashboard</h1>
+    <div class="section">
+      <h2>Current Time</h2>
+      <div id="time"></div>
+      <div id="date"></div>
+    </div>
+
+    <div class="section">
+      <h2>Calendar & Events</h2>
+      <input type="date" id="date-picker" />
+      <input type="text" id="event-input" placeholder="Add event name" />
+      <button id="add-event-btn">Add Event</button>
+      <div id="event-display"></div>
+    </div>
+
+    <div class="section">
+      <h2>Developer Quote of the Day</h2>
+      <blockquote id="quote">Loading...</blockquote>
+      <footer id="author"></footer>
+    </div>
   </div>
 
-  <div class="section">
-    <h2>Latest News</h2>
-    <div id="newsContainer">Loading news...</div>
-  </div>
-</div>
-
-<script>
-  // Password Check
-  function checkPassword() {
-    const input = document.getElementById("passwordInput").value;
-    const correctPassword = "8653";
-    if (input === correctPassword) {
-      document.getElementById("passwordScreen").style.display = "none";
-      document.getElementById("dashboardContent").style.display = "block";
-    } else {
-      document.getElementById("errorMsg").textContent = "Incorrect password.";
-    }
-  }
-
-  // Live Clock
-  function updateClock() {
-    const now = new Date();
-    document.getElementById("clock").textContent = now.toLocaleTimeString();
-  }
-  setInterval(updateClock, 1000);
-  updateClock();
-
-  // Calendar
-  const calendarTable = document.getElementById("calendarTable");
-  const monthYear = document.getElementById("monthYear");
-  const eventList = document.getElementById("eventList");
-  const events = JSON.parse(localStorage.getItem("calendarEvents") || "{}");
-
-  const now = new Date();
-  let currentMonth = now.getMonth();
-  let currentYear = now.getFullYear();
-
-  function buildCalendar(month, year) {
-    calendarTable.innerHTML = "";
-    monthYear.textContent = `${new Date(year, month).toLocaleString('default', { month: 'long' })} ${year}`;
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-    const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    const header = document.createElement("tr");
-    daysOfWeek.forEach(day => {
-      const th = document.createElement("th");
-      th.textContent = day;
-      header.appendChild(th);
-    });
-    calendarTable.appendChild(header);
-
-    let date = 1;
-    for (let i = 0; i < 6; i++) {
-      const row = document.createElement("tr");
-      for (let j = 0; j < 7; j++) {
-        const cell = document.createElement("td");
-        if (i === 0 && j < firstDay) {
-          cell.textContent = "";
-        } else if (date > daysInMonth) {
-          break;
-        } else {
-          cell.textContent = date;
-          cell.onclick = () => showEventInput(year, month, date);
-          date++;
-        }
-        row.appendChild(cell);
-      }
-      calendarTable.appendChild(row);
-    }
-  }
-
-  function showEventInput(year, month, day) {
-    const key = `${year}-${month + 1}-${day}`;
-    eventList.innerHTML = `
-      <div class="event">
-        <strong>${key}</strong><br/>
-        <input id="eventInput" type="text" placeholder="Event title" />
-        <button onclick="saveEvent('${key}')">Save</button>
-      </div>
-      ${events[key] ? `<div class="event"><em>Saved:</em> ${events[key]}</div>` : ""}
-    `;
-  }
-
-  function saveEvent(key) {
-    const input = document.getElementById("eventInput");
-    if (input.value.trim()) {
-      events[key] = input.value.trim();
-      localStorage.setItem("calendarEvents", JSON.stringify(events));
-      showEventInput(...key.split("-").map((v, i) => i === 1 ? +v - 1 : +v));
-    }
-  }
-
-  buildCalendar(currentMonth, currentYear);
-
-  // Coding Question
-  const questions = [
-    "How would you detect a cycle in a linked list?",
-    "What’s the difference between synchronous and asynchronous code?",
-    "How would you implement a debounce function in JavaScript?",
-    "Explain the concept of closures with an example.",
-    "How does garbage collection work in modern programming languages?",
-    "Design a URL shortener like Bit.ly. What would your architecture look like?"
-  ];
-  const dailyQuestion = questions[Math.floor(Math.random() * questions.length)];
-  document.getElementById("codingQuestion").textContent = dailyQuestion;
-
-  // News API
-  async function fetchNews() {
-    const apiKey = "e49c6ebb27c64e01b4b00f1a51f07c00"; // Your API key
-    const newsContainer = document.getElementById("newsContainer");
-
-    try {
-      const res = await fetch(`https://newsapi.org/v2/top-headlines?country=us&pageSize=5&apiKey=${apiKey}`);
-      const data = await res.json();
-      newsContainer.innerHTML = "";
-      data.articles.forEach(article => {
-        const div = document.createElement("div");
-        div.className = "news-item";
-        div.innerHTML = `<strong>${article.title}</strong><br><small>${article.source.name}</small>`;
-        newsContainer.appendChild(div);
-      });
-    } catch (err) {
-      newsContainer.textContent = "Failed to load news. Check API key or CORS settings.";
-    }
-  }
-
-  fetchNews();
-</script>
+  <script src="script.js"></script>
 </body>
 </html>
-
 
