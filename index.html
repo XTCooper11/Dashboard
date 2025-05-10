@@ -1,1 +1,146 @@
+import React, { useEffect, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import axios from "axios";
+import { format, parseISO } from "date-fns";
+
+export default function Dashboard() {
+  const [authenticated, setAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+
+  const [time, setTime] = useState("");
+  const [date, setDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [eventText, setEventText] = useState("");
+  const [events, setEvents] = useState({});
+  const [dailyProblem, setDailyProblem] = useState(null);
+
+  useEffect(() => {
+    const updateClock = () => {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+      });
+      const dateString = format(now, "PPPP");
+      setTime(timeString);
+      setDate(dateString);
+    };
+
+    updateClock();
+    const timer = setInterval(updateClock, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    async function fetchDailyProblem() {
+      try {
+        const res = await axios.get("https://programming-quotes-api.herokuapp.com/quotes/random");
+        setDailyProblem(res.data);
+      } catch (err) {
+        console.error("Error fetching problem:", err);
+      }
+    }
+    fetchDailyProblem();
+  }, []);
+
+  const handleAddEvent = () => {
+    const dateKey = format(selectedDate, "yyyy-MM-dd");
+    setEvents(prev => ({ ...prev, [dateKey]: eventText }));
+    setEventText("");
+  };
+
+  const PASSWORD = "8653";
+
+  const handleLogin = () => {
+    if (passwordInput === PASSWORD) {
+      setAuthenticated(true);
+    } else {
+      alert("Incorrect password");
+    }
+  };
+
+  if (!authenticated) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gray-900 text-white">
+        <Card className="w-80 text-center bg-gray-800">
+          <CardContent className="p-6">
+            <h2 className="text-xl font-bold mb-4">Enter Kiosk Password</h2>
+            <Input
+              type="password"
+              value={passwordInput}
+              onChange={e => setPasswordInput(e.target.value)}
+              placeholder="Enter password"
+              className="mb-4"
+            />
+            <Button onClick={handleLogin} className="w-full">
+              Login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-900 text-white min-h-screen">
+      <Card className="text-center bg-gray-800">
+        <CardContent>
+          <h1 className="text-3xl font-bold">Current Time</h1>
+          <p className="text-xl mt-2">{time}</p>
+          <p className="text-md text-gray-400">{date}</p>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-gray-800">
+        <CardContent>
+          <h2 className="text-xl font-semibold mb-2">Monthly Calendar</h2>
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={setSelectedDate}
+            modifiers={{
+              eventDays: Object.keys(events).map(date => parseISO(date))
+            }}
+            modifiersClassNames={{
+              eventDays: "bg-blue-600 text-white rounded-full"
+            }}
+          />
+          <div className="mt-4">
+            <Input
+              value={eventText}
+              onChange={e => setEventText(e.target.value)}
+              placeholder="Add event name"
+              className="text-black"
+            />
+            <Button onClick={handleAddEvent} className="mt-2 w-full">
+              Add Event
+            </Button>
+          </div>
+          {events[format(selectedDate, "yyyy-MM-dd")] && (
+            <p className="mt-2 text-green-400">Event: {events[format(selectedDate, "yyyy-MM-dd")]}</p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="md:col-span-2 bg-gray-800">
+        <CardContent>
+          <h2 className="text-xl font-semibold mb-2">Developer Quote of the Day</h2>
+          {dailyProblem ? (
+            <div>
+              <p className="italic">"{dailyProblem.en}"</p>
+              <p className="text-right text-sm mt-2">— {dailyProblem.author}</p>
+            </div>
+          ) : (
+            <p>Loading quote...</p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
